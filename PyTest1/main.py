@@ -13,11 +13,6 @@ from threading import Thread
 from PyQt5 import uic
 from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog
 from PyQt5.QtGui import QPixmap, QImage
-
-# import cgitb
-# cgitb.enable(format='text')
-import pythoncom
-
 from RLE import RLE_encode, RLE_decode
 
 class Main_Form(QWidget):
@@ -27,41 +22,29 @@ class Main_Form(QWidget):
         self.methodsDict = {0: self.RLE_decompress}
         self.processDictInv = dict((v,k) for k,v in self.processDict.items())
         self.config = {'byteorder': 'big'}
-        self.selected_image = ''
-        uic.loadUi('compressionTests.ui', self)
+        self.selected_image = None
+        uic.loadUi('PyTest1\\compressionTests.ui', self)
 
         self.select_image_btn.clicked.connect(self.select_image)
+        self.show_image_btn.clicked.connect(self.show_image)
+        self.save_as_PNG_btn.clicked.connect(self.save_as_PNG)
         self.RLE_btn.clicked.connect(self.RLE_compress)
-        self.TEST_btn.clicked.connect(self.test)
+        # self.TEST_btn.clicked.connect(self.test)
 
     def select_image(self):
-        self.selected_image = selected_image = None
-        self.selected_image = selected_image = QFileDialog.getOpenFileName(self, 'Selecciona la imatge que vulguis comprimir', 'C:\\Users\\nuvir\\Pictures\\media_militia_sample_image_pack_001', 'Images (*.png *.xpm *.jpeg *.jpg *bmp *webp *viet)')[0]
-        pixmap=''
-        if selected_image == '':
+        self.selected_image = None
+        self.selected_image = image_name = QFileDialog.getOpenFileName(self, 'Selecciona la imatge que vulguis comprimir', 'C:\\Users\\nuvir\\Pictures\\media_militia_sample_image_pack_001', 'Images (*.png *.xpm *.jpeg *.jpg *bmp *webp *viet)')[0]
+        if self.selected_image == '':
             return
-        if selected_image[-5:] == '.viet':
-            # time.sleep(0.5)
-            pixmap = self.decompress_my_image()
+        if self.selected_image[-5:] == '.viet':
+            self.selected_image = self.decompress_my_image()
         else:
-            pixmap = QPixmap(selected_image)
-        self.imageInfoTxt.setPlainText(f'Tamany de la imatge: {pixmap.width()}x{pixmap.height()}px, amb un pes en cru de {round(pixmap.width()*pixmap.height()*3e-6, 2)} MB')
-        print('Starting size checks')
-        # pythoncom.PumpWaitingMessages()
-
-        h = pixmap.height() / self.image_label.height()
-        w = pixmap.width() / self.image_label.width()
-        print('Ending var time')
-        # time.sleep(0.5)
-        if h > w:
-            print('Ending var time')
-            pixmap = pixmap.scaledToHeight(self.image_label.height())
-        else:
-            print(self.image_label.width())
-            pixmap = pixmap.scaledToWidth(self.image_label.width())
-        print('size checked')
-        self.image_label.setPixmap(pixmap)
-        print('Image decompressed')
+            self.selected_image = Image.open(self.selected_image)
+        self.imageInfoTxt.setPlainText(
+            f'Imatge: {image_name.split("/")[-1]}\n' +  
+            f'Tamany de la imatge: {self.selected_image.width}x{self.selected_image.height}px, amb un pes en cru de {round(self.selected_image.width*self.selected_image.height*3e-6, 2)} MB')
+        if self.visualize_cb.isChecked():
+            self.selected_image.show()
 
     def get_new_file_location(self, custom_extension=True):
         dlg = QFileDialog()
@@ -83,7 +66,7 @@ class Main_Form(QWidget):
         if new_file == '':
             return # If no selected file
 
-        image = asarray(Image.open(self.selected_image)) # (height, width, depth)
+        image = asarray(self.selected_image) # (height, width, depth)
         if  len(image.shape) == 2:
             image.resize(image.shape[1], image.shape[0], 1)
         [iY, iX, depth] = image.shape
@@ -103,7 +86,6 @@ class Main_Form(QWidget):
                 file.write(i.result())
         print('compression sucessful')
         file.close()
-        # del file 
 
     def RLE_decompress(self, data):
         iX = int.from_bytes(data.read(2), byteorder=self.config['byteorder'], signed=False)
@@ -121,60 +103,20 @@ class Main_Form(QWidget):
         method = int.from_bytes(file.read(1), byteorder=self.config['byteorder'], signed=False)
         value = self.methodsDict[method](file)
 
-        # pythoncom.PumpWaitingMessages()
-        print(value)
         file.close()
-        im = ImageQt(Image.fromarray(value).convert('RGB'))
-        # time.sleep(0.5)
-        return QPixmap.fromImage(im)
+        pil_image = Image.fromarray(value).convert('RGB')
+        return pil_image
 
-    def test(self):
-        # Get image
-        im = asarray(Image.open(self.get_new_file_location(custom_extension=False)))
-        if  len(im.shape) == 2:
-            im.resize(im.shape[1], im.shape[0], 1)
-        [iY, iX, depth] = im.shape
+    def show_image(self):
+        if self.selected_image == None:
+            return
+        self.selected_image.show()
 
-        # Encode image
-        eres = bytes()
-        threads = []
-        with ThreadPoolExecutor() as executor:
-            for i in range(depth):
-                data = im[:, :, i].flatten('C')
-                threads.append(executor.submit(RLE_encode, data))
-            
-            for i in threads:
-                eres += i.result()
-        
-        # Decode image (eres)
-        dres = asarray(RLE_decode(eres), dtype=np.uint8)
-        dim = np.zeros((iY, iX, len(dres)//(iY*iX)))
-        for i in range(depth):
-            dim[:, :, i] = dres[iY*iX*i:iY*iX*(i+1)].reshape(iY, iX)
-        dim = dim.astype(np.uint8)
-        
-        # dim = DECODED_IMAGE!!!!
-        # Tests
-        fdim = dim.astype(np.uint8).flatten('C')
-        fim = im.astype(np.uint8).flatten('C')
-        for i in range(len(fim)):
-            if fim[i] != fdim[i]:
-                print('WRONG!!')
-        print(np.array_equal(im, dim))
-        print(np.array_equal(im, dim))
-
-        arim = Image.fromarray(dim).convert('RGB')
-        qim = ImageQt(arim)
-        pixmap = QPixmap.fromImage(qim)
-        h = pixmap.height() / self.image_label.height()
-        w = pixmap.width() / self.image_label.width()
-        if h > w:
-            pixmap = pixmap.scaledToHeight(self.image_label.height())
-        else:
-            pixmap = pixmap.scaledToWidth(self.image_label.width())
-        self.image_label.setPixmap(pixmap)
-        print('ahora si, ¿no?')
-
+    def save_as_PNG(self):
+        path = self.get_new_file_location(custom_extension=False)
+        if not path[:-4].__contains__('.'):
+            path += '.png'
+        self.selected_image.save(path, format='PNG')
 
 if __name__ == '__main__':
     app = QApplication([])

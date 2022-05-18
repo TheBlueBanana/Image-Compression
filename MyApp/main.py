@@ -1,19 +1,22 @@
 from base64 import decode
 from concurrent.futures import thread, ThreadPoolExecutor
 import concurrent.futures
+from email.mime import application
 from math import log2
 from unittest import result
 from PIL import Image
 from PIL.ImageQt import ImageQt
 from numpy import asarray
 import numpy as np
-import sys
+import sys, os
 import time
 from threading import Thread
 from PyQt5 import uic
 from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog
 from PyQt5.QtGui import QPixmap, QImage
-from RLE import RLE_encode, RLE_decode
+from compression_methods.RLE import RLE_encode, RLE_decode
+
+application.__path__ = os.path.dirname(sys.executable)
 
 class Main_Form(QWidget):
     def __init__(self):
@@ -23,7 +26,8 @@ class Main_Form(QWidget):
         self.processDictInv = dict((v,k) for k,v in self.processDict.items())
         self.config = {'byteorder': 'big'}
         self.selected_image = None
-        uic.loadUi('PyTest1\\compressionTests.ui', self)
+        uic.loadUi('MyApp\\UI\\compressionTests.ui', self)
+        # uic.loadUi('UI\\compressionTests.ui', self)
 
         self.select_image_btn.clicked.connect(self.select_image)
         self.show_image_btn.clicked.connect(self.show_image)

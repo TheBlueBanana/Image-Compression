@@ -2,15 +2,20 @@ from random import randint
 import sys
 import numpy as np
 
-def RLE_encode(data):
+def RLE_encode(data, progress_bar=None, thread_count=0):
     print('encoding RLE')
     result = bytes()
     last_digit = [] # ultims digits
     c = 0 # contador
     cp = 0 # contador parcial
+    progress_cont = 0 # progress counter
     for i in data:
-        if randint(0, 10000) > 9994:
-            print('not dead, yet')
+        #progress handling
+        progress_cont+=1
+        if progress_bar!=None and progress_cont % 10000 == 0:
+            # progress_bar.update_progress(progress_cont/len(data), thread_count)
+            progress_bar.setValue(int(progress_cont/len(data)*100))
+
         if len(last_digit) == 0: # si no hi ha digit anterior, passa
             last_digit.append(i) 
             continue

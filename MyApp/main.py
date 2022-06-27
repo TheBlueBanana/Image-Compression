@@ -14,7 +14,11 @@ from threading import Thread
 from PyQt5 import uic
 from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog
 from PyQt5.QtGui import QPixmap, QImage
+from compression_methods.DC import DC_encode, DC_decode
 from compression_methods.RLE import RLE_encode, RLE_decode
+from compression_methods.huffman import huffman_encode, huffman_decode
+from compression_methods.hybrid import RLE_H_encode, RLE_H_decode, DC_H_encode, DC_H_decode, DC_RLE_H_encode, DC_RLE_H_decode
+
 
 application.__path__ = os.path.dirname(sys.executable)
 
@@ -23,8 +27,9 @@ build = True
 class Main_Form(QWidget):
     def __init__(self):
         super().__init__()
-        self.processDict = {0 : 'RLE'}
-        self.methodsDict = {0: self.RLE_decompress}
+        self.processDict = {0: 'RLE', 1: 'huffman', 2: 'DC', 3: 'RLE_H', 4: 'DC_H', 5: 'DC_RLE_H'}
+        self.encoderDict = {'RLE': RLE_encode, 'huffman' : huffman_encode, 'DC' : DC_encode, 'RLE_H' : RLE_H_encode, 'DC_H': DC_H_encode, 'DC_RLE_H': DC_RLE_H_encode}
+        self.decoderDict = {0: RLE_decode, 1 : huffman_decode, 2: DC_decode, 3: RLE_H_decode, 4: DC_H_decode, 5:DC_RLE_H_decode}
         self.processDictInv = dict((v,k) for k,v in self.processDict.items())
         self.config = {'byteorder': 'big'}
         self.selected_image = None
@@ -37,11 +42,16 @@ class Main_Form(QWidget):
         self.show_image_btn.clicked.connect(self.show_image)
         self.save_as_PNG_btn.clicked.connect(self.save_as_PNG)
         self.RLE_btn.clicked.connect(self.RLE_compress)
+        self.huffman_btn.clicked.connect(self.huffman_compress)
+        self.DC_btn.clicked.connect(self.DC_compress)
+        self.RLE_H_btn.clicked.connect(self.RLE_H_compress)
+        self.DC_H_btn.clicked.connect(self.DC_H_compress)
+        self.DC_RLE_H_btn.clicked.connect(self.DC_RLE_H_compress)
         # self.TEST_btn.clicked.connect(self.test)
 
-        self.progress_bar.setVisible(False)
         self.progress_bar.setMaximum(100)
         self.progress_bar.setMinimum(0)
+        self.progress_bar.setVisible(False)
         self.progress_bar_label.setVisible(False)
 
     def select_image(self):
@@ -75,6 +85,19 @@ class Main_Form(QWidget):
         return new_file
 
     def RLE_compress(self):
+        self.compress_image('RLE')
+    def huffman_compress(self):
+        self.compress_image('huffman')
+    def DC_compress(self):
+        self.compress_image('DC')
+    def RLE_H_compress(self):
+        self.compress_image('RLE_H')
+    def DC_H_compress(self):
+        self.compress_image('DC_H')
+    def DC_RLE_H_compress(self):
+        self.compress_image('DC_RLE_H')
+    
+    def compress_image(self, method):
         new_file = self.get_new_file_location()
         if new_file == '':
             return # If no selected file
@@ -85,24 +108,20 @@ class Main_Form(QWidget):
         [iY, iX, depth] = image.shape
 
         file = open(new_file, 'wb') #cambiar a xb and handle errors!!!!!!!!!!!!!!!!
-        file.write(bytearray([self.processDictInv['RLE']]))
+        file.write(bytearray([self.processDictInv[method]]))
         file.write(iX.to_bytes(2, self.config['byteorder']))
         file.write(iY.to_bytes(2, self.config['byteorder']))
 
-        self.progress_bar.setVisible(True)
         self.progress_bar_label.setVisible(True)
+        self.progress_bar.setVisible(True)
         with ThreadPoolExecutor() as executor:
             self.progress_bar.setValue(0)
-            # bar = progress_bar(self.progress_bar, depth)
             threads = []
             for i in range(1, depth):
                 data = image[:, :, i].flatten('C')
-                # threads.append(executor.submit(RLE_encode, data=data, progress_bar=bar, thread_count=i))
-                threads.append(executor.submit(RLE_encode, data=data))
-                # Add progress bar rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-                #Make a tread only for computing thease
+                threads.append(executor.submit(self.encoderDict[method], data=data))
             data = image[:, :, 0].flatten('C')    
-            file.write(RLE_encode(data, progress_bar=self.progress_bar))
+            file.write(self.encoderDict[method](data, progress_bar=self.progress_bar))
             for i in threads:
                 file.write(i.result())
                 
@@ -110,25 +129,28 @@ class Main_Form(QWidget):
         self.progress_bar_label.setVisible(False)
         print('compression sucessful')
         file.close()
+    
+    def decompress_my_image(self):
+        self.progress_bar_label.setVisible(True)
+        self.progress_bar.setVisible(True)
 
-    def RLE_decompress(self, data):
-        iX = int.from_bytes(data.read(2), byteorder=self.config['byteorder'], signed=False)
-        iY = int.from_bytes(data.read(2), byteorder=self.config['byteorder'], signed=False)
-        im_string = asarray(RLE_decode(data.read()), dtype=np.uint8)
+        file = open(self.selected_image, 'rb')
+        method = int.from_bytes(file.read(1), byteorder=self.config['byteorder'], signed=False)
+
+        iX = int.from_bytes(file.read(2), byteorder=self.config['byteorder'], signed=False)
+        iY = int.from_bytes(file.read(2), byteorder=self.config['byteorder'], signed=False)
+        im_string = asarray(self.decoderDict[method](file.read()), dtype=np.uint8)
         depth = len(im_string)//(iY*iX)
         print(f'{iX}x{iY}px with a total of {len(im_string)}')
         decoded_image = np.zeros((iY, iX, depth), dtype=np.uint8)
         for i in range(depth):
             decoded_image[:, :, i] = im_string[iY*iX*i:iY*iX*(i+1)].reshape(iY, iX)
-        return decoded_image
-    
-    def decompress_my_image(self):
-        file = open(self.selected_image, 'rb')
-        method = int.from_bytes(file.read(1), byteorder=self.config['byteorder'], signed=False)
-        value = self.methodsDict[method](file)
+        
 
         file.close()
-        pil_image = Image.fromarray(value).convert('RGB')
+        pil_image = Image.fromarray(decoded_image).convert('RGB')
+        self.progress_bar_label.setVisible(False)
+        self.progress_bar.setVisible(False)
         return pil_image
 
     def show_image(self):
@@ -154,8 +176,6 @@ class progress_bar():
             self.bar.setValue(int(min(self.threads) * 100))
             print(int(min(self.threads) * 100))
         #set progress to min(self.threads)
-
-
 
 if __name__ == '__main__':
     app = QApplication([])

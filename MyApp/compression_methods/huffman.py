@@ -15,16 +15,9 @@ def huffman_encode(data, progress_bar=None):
     result = bytes()
     data = list(data)
     data.append(256) # the end of input mark
-    frequency_dict = {}
-    arr = data.copy()
     
-    while len(arr) != 0:
-        v = arr[0]
-        frequency_dict.update({v: arr.count(v)})
-        arr = list(filter(v.__ne__, arr))
-        if progress_bar != None:
-            progress_bar.setValue(len(frequency_dict)/200 * 0.3)
-
+    frequency_dict = get_frequencies(data.copy())
+    
     pixel_dict = create_huffman_tree(frequency_dict).visualize() # we get the byte to number dict
     bin_dict = json.dumps(pixel_dict).encode('utf-8') #codifiquem el diccionari obtingut
     # 2. Code the Tree (len + tree)
@@ -65,6 +58,14 @@ def sort_dict(d, reverse=False):
     """odrdena un dicrtionari de menor a major"""
     return dict(sorted(d.items(), key=lambda x: x[1], reverse=reverse)) # ordena el diccionari en funció dels valors de frequencies
   
+def get_frequencies(arr):
+    frequency_dict = {}
+    while len(arr) != 0:
+        v = arr[0]
+        frequency_dict.update({v: arr.count(v)})
+        arr = list(filter(v.__ne__, arr))
+    return frequency_dict
+
 class node:
     """Un node d'un arbre binari"""
     def __init__(self, next_node_a, next_node_b):

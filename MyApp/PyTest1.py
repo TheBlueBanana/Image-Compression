@@ -1,10 +1,17 @@
+from ast import Bytes
 from math import log2
 from bitstring import BitArray, BitStream
-a = {1:2, 3:6, 9:0}
 
-print( dict((str(k),v) for k,v in a.items()))
-# a = BitStream(f'uint:8=1')
-# b = 18
+a = [1, 2,4]
+print(dir(a))
+# Huffman
+# a = bytes([1, 2, 3])
+# st = BitStream(a)
+# print(st.count(0))
+# print(st.count(1))
+
+# Others
+# ENTROPY = -sum(p*log2(p))
 
 # # The number of bits that correspond to the two digits.
 # print(a^b)

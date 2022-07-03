@@ -131,16 +131,7 @@ def RLE_decode_arr(data):
             result.append(i)
             c+= 1
     return result
-
-def test():
-    test=[]
-    for i in range(100000):
-        test.append(randint(0, 100))
-    te = RLE_encode(test)
-    te2 = alternative_RLE(test)
-    print(te==te2)
-    print(RLE_decode(te2) == test)
-test()
+    
 def test_arr():
     test=[]
     for i in range(1000000):

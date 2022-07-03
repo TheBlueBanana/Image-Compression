@@ -2,14 +2,14 @@ from ast import Bytes
 from math import log2
 from bitstring import BitArray, BitStream
 
-a = [1, 2,4]
-print(dir(a))
 # Huffman
-# a = bytes([1, 2, 3])
-# st = BitStream(a)
-# print(st.count(0))
-# print(st.count(1))
+a = bytes([1, 2, 3])
+st = BitStream(a)
+print(st.count(0))
+print(st.count(1))
+b = (1, 2, 3)
 
+print(b + b + b)
 # Others
 # ENTROPY = -sum(p*log2(p))
 

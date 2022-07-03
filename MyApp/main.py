@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog
 from PyQt5.QtGui import QPixmap, QImage
 from compression_methods.DC import DC_encode, DC_decode
 from compression_methods.RLE import RLE_encode, RLE_decode
+from compression_methods.entropy import get_all_entropies
 from compression_methods.huffman import huffman_encode, huffman_decode
 from compression_methods.hybrid import RLE_H_encode, RLE_H_decode, DC_H_encode, DC_H_decode, DC_RLE_H_encode, DC_RLE_H_decode
 
@@ -47,7 +48,9 @@ class Main_Form(QWidget):
         self.RLE_H_btn.clicked.connect(self.RLE_H_compress)
         self.DC_H_btn.clicked.connect(self.DC_H_compress)
         self.DC_RLE_H_btn.clicked.connect(self.DC_RLE_H_compress)
-        # self.TEST_btn.clicked.connect(self.test)
+
+        self.entropy_btn.clicked.connect(self.show_entropy)
+        self.entropy_txt.setVisible(False)
 
         self.progress_bar.setMaximum(100)
         self.progress_bar.setMinimum(0)
@@ -55,6 +58,7 @@ class Main_Form(QWidget):
         self.progress_bar_label.setVisible(False)
 
     def select_image(self):
+        self.entropy_txt.setVisible(False)
         self.selected_image = None
         self.selected_image = image_name = QFileDialog.getOpenFileName(self, 'Selecciona la imatge que vulguis comprimir', 'C:\\Users\\nuvir\\Pictures\\media_militia_sample_image_pack_001', 'Images (*.png *.xpm *.jpeg *.jpg *bmp *webp *viet)')[0]
         if self.selected_image == '':
@@ -163,6 +167,36 @@ class Main_Form(QWidget):
         if not path[:-4].__contains__('.'):
             path += '.png'
         self.selected_image.save(path, format='PNG')
+    
+    def show_entropy(self):
+        self.entropy_txt.setVisible(True)
+        
+        image = asarray(self.selected_image) # (height, width, depth)
+        if  len(image.shape) == 2:
+            image.resize(image.shape[1], image.shape[0], 1)
+        [iY, iX, depth] = image.shape
+
+        self.progress_bar_label.setVisible(True)
+        self.progress_bar.setVisible(True)
+        entropies = None
+        with ThreadPoolExecutor() as executor:
+            self.progress_bar.setValue(0)
+            threads = []
+            for i in range(1, depth):
+                data = image[:, :, i].flatten('C')
+                threads.append(executor.submit(get_all_entropies, data=data))
+            data = image[:, :, 0].flatten('C')    
+            entropies = get_all_entropies(data)
+            for i in threads:
+                entropies = list(map(lambda x: entropies[x] + i.result()[x], range(len(entropies))))
+                
+        self.progress_bar.setVisible(False)
+        self.progress_bar_label.setVisible(False)
+        print('analysis sucessful')
+        
+        base_entropy, RLE_entropy, DC_entropy, DC_RLE_entropy = entropies
+        text = 'Entropia de la imatge (/1.000.000): \nSense comprimir: {base_entropy:.0f} \nRLE: {RLE_entropy:.0f} \n CD: {DC_entropy:.0f}\n DC + RLE: {DC_RLE_entropy:.0f}'
+        self.entropy_txt.setPlainText(text.format(base_entropy=base_entropy*10e-6, RLE_entropy=RLE_entropy*10e-6, DC_entropy=DC_entropy*10e-6, DC_RLE_entropy=DC_RLE_entropy*10e-6))
 
 class progress_bar():
     def __init__(self, bar, thread_count):

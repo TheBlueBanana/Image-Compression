@@ -59,6 +59,7 @@ def sort_dict(d, reverse=False):
     return dict(sorted(d.items(), key=lambda x: x[1], reverse=reverse)) # ordena el diccionari en funció dels valors de frequencies
   
 def get_frequencies(arr):
+    arr = list(arr)
     frequency_dict = {}
     while len(arr) != 0:
         v = arr[0]

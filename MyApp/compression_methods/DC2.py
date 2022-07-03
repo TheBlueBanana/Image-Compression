@@ -27,8 +27,7 @@ def DC2_decode(data):
         
         for i in threads:
             result.extend(i.result())
-    return result
-    
+    return result  
 
 def decode_chunk(data):
     chunk_length = int.from_bytes(data.read(8*4).tobytes(), byteorder='big') 
@@ -54,7 +53,8 @@ def DC2_encode_arr(data, progress_bar=None):
     result = [last_num]
     for i in data:
         diff = i - last_num
-        result.extend([-128, i] if  abs(diff) > 127 else [diff]) 
+        # result.extend([-128, i] if  abs(diff) > 127 else [diff])
+        result.append(diff) 
         last_num = i
     # result = int.to_bytes(len(result.tobytes()), length=4, byteorder='big') +  result # chunk_size
     return [len(result)] + result
@@ -80,14 +80,13 @@ def decode_chunk_arr(data):
     result = [last_num]
     full_value = False
     for i in data:
-        if i == -128 and not full_value:
-            full_value = True
-            continue
-        else:
-            last_num = i if full_value else i + last_num
-            result.append(last_num)
-            full_value = False
-        # result.append(last_num.uint) #BitStream(f'0b{last_num}')
+        # if i == -128 and not full_value:
+        #     full_value = True
+        #     continue
+        # else:
+        last_num = i if full_value else i + last_num
+        result.append(last_num)
+        full_value = False
     return result
 
 

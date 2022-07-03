@@ -9,7 +9,6 @@ print(st.count(0))
 print(st.count(1))
 b = (1, 2, 3)
 
-print(b + b + b)
 # Others
 # ENTROPY = -sum(p*log2(p))
 

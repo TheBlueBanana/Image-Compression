@@ -195,8 +195,8 @@ class Main_Form(QWidget):
         print('analysis sucessful')
         
         base_entropy, RLE_entropy, DC_entropy, DC_RLE_entropy = entropies
-        text = 'Entropia de la imatge (/1.000.000): \nSense comprimir: {base_entropy:.0f} \nRLE: {RLE_entropy:.0f} \n CD: {DC_entropy:.0f}\n DC + RLE: {DC_RLE_entropy:.0f}'
-        self.entropy_txt.setPlainText(text.format(base_entropy=base_entropy*10e-6, RLE_entropy=RLE_entropy*10e-6, DC_entropy=DC_entropy*10e-6, DC_RLE_entropy=DC_RLE_entropy*10e-6))
+        text = 'Entropia de la imatge (/100.000): \nSense comprimir: {base_entropy:.0f} \nRLE: {RLE_entropy:.0f} \n CD: {DC_entropy:.0f}\n DC + RLE: {DC_RLE_entropy:.0f}'
+        self.entropy_txt.setPlainText(text.format(base_entropy=base_entropy*10e-5, RLE_entropy=RLE_entropy*10e-5, DC_entropy=DC_entropy*10e-5, DC_RLE_entropy=DC_RLE_entropy*10e-5))
 
 class progress_bar():
     def __init__(self, bar, thread_count):

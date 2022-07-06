@@ -2,14 +2,13 @@
 import math as math
 import json
 from random import randint
+from time import time
 from bitstring import BitArray, BitStream
 from concurrent.futures import thread, ThreadPoolExecutor
-
-
-# INTRODUCE LOADING BAR!!!!!!!!!!!!!!
-
+from numba import njit
 
 # 1. Get frequencies and generate huffman Tree
+
 def huffman_encode(data, progress_bar=None):
     print('encoding huffman')
     result = bytes()
@@ -47,6 +46,7 @@ def huffman_decode(data):
             result.extend(i.result())
     return result
 
+# @njit
 def decode_section(bin_data):
     dict_lenght = int.from_bytes(bin_data.read(8*2).tobytes(), byteorder='big') # each dict takes 2 bytes of space 
     binDict = bin_data.read(dict_lenght*8).tobytes() # dict lenght is in bits
@@ -161,18 +161,24 @@ def huffman_DC_decode(data): # change!!!!!! => lenHuffman -> lenDC (decode separ
 
 
 def test():
+    # huffman_decode(huffman_encode(range(10)))
+
+
     test = []
     test2 = []
-    for i in range(100000):
+    for i in range(1000):
         test.append(randint(-127, 255))
         test2.append(randint(-127, 255))
     # test[1290] = 256
     # test = [1, 21, 4, 5]
     encoded = huffman_encode(test.copy())
     encoded2 = huffman_encode(test2.copy())
+    t = time()
     decoded = huffman_decode(encoded + encoded2)
     # print(test)
     # print(encoded)
-    print(decoded)
+    # print(decoded)
+    print(time()-t)
     print(test + test2 == decoded)
-# test()
+
+test()

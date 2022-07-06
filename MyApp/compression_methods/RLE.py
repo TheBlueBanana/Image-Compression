@@ -1,6 +1,7 @@
 from random import randint
 import sys
 import numpy as np
+from numba import njit
 
 def RLE_encode(data):
     arr = RLE_encode_arr(data)
@@ -28,6 +29,7 @@ def to_negative_encoding(num):
     """Transforma un byte sense signe a un amb signe"""
     return int.from_bytes(bytes([num]), 'big', signed=True)
 
+@njit
 def RLE_encode_arr(data, progress_bar=None):
     print('encoding RLE arr')
     result = []
@@ -133,12 +135,15 @@ def RLE_decode_arr(data):
     return result
     
 def test_arr():
+    RLE_decode_arr(RLE_encode_arr([np.arange(100)]))
+
     test=[]
     for i in range(1000000):
         test.append(randint(0, 10))
+    test = np.array(test)
     te = RLE_encode_arr(test)
     print(te)
     td = RLE_decode_arr(te)
     print(td)
     print(td == test)
-# test_arr()
+test_arr()

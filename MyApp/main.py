@@ -18,7 +18,7 @@ from compression_methods.DC import DC_encode, DC_decode
 from compression_methods.RLE import RLE_encode, RLE_decode
 from compression_methods.entropy import get_all_entropies
 from compression_methods.huffman import huffman_encode, huffman_decode
-from compression_methods.hybrid import RLE_H_encode, RLE_H_decode, DC_H_encode, DC_H_decode, DC_RLE_H_encode, DC_RLE_H_decode
+from compression_methods.hybrid import RLE_H_encode, RLE_H_decode, DC_H_encode, DC_H_decode, DC_RLE_H_encode, DC_RLE_H_decode, variety_test
 
 
 application.__path__ = os.path.dirname(sys.executable)
@@ -125,7 +125,7 @@ class Main_Form(QWidget):
                 data = image[:, :, i].flatten('C')
                 threads.append(executor.submit(self.encoderDict[method], data=data))
             data = image[:, :, 0].flatten('C')    
-            file.write(self.encoderDict[method](data, progress_bar=self.progress_bar))
+            file.write(self.encoderDict[method](data))
             for i in threads:
                 file.write(i.result())
                 
@@ -185,8 +185,9 @@ class Main_Form(QWidget):
             for i in range(1, depth):
                 data = image[:, :, i].flatten('C')
                 threads.append(executor.submit(get_all_entropies, data=data))
+                entropies = get_all_entropies(data)
             data = image[:, :, 0].flatten('C')    
-            entropies = get_all_entropies(data)
+            # variety_test(data)
             for i in threads:
                 entropies = list(map(lambda x: entropies[x] + i.result()[x], range(len(entropies))))
                 
@@ -195,7 +196,7 @@ class Main_Form(QWidget):
         print('analysis sucessful')
         
         base_entropy, RLE_entropy, DC_entropy, DC_RLE_entropy = entropies
-        text = 'Entropia de la imatge (/100.000): \nSense comprimir: {base_entropy:.0f} \nRLE: {RLE_entropy:.0f} \n CD: {DC_entropy:.0f}\n DC + RLE: {DC_RLE_entropy:.0f}'
+        text = 'Entropia de la imatge (/100.000): \nSense comprimir: {base_entropy:.0f} \nRLE: {RLE_entropy:.0f} \nCD: {DC_entropy:.0f}\nDC + RLE: {DC_RLE_entropy:.0f}'
         self.entropy_txt.setPlainText(text.format(base_entropy=base_entropy*10e-5, RLE_entropy=RLE_entropy*10e-5, DC_entropy=DC_entropy*10e-5, DC_RLE_entropy=DC_RLE_entropy*10e-5))
 
 class progress_bar():

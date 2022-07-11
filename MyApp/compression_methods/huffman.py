@@ -5,7 +5,7 @@ from random import randint
 from time import time
 from bitstring import BitArray, BitStream
 from concurrent.futures import thread, ThreadPoolExecutor
-from numba import njit
+import numpy as np
 
 # 1. Get frequencies and generate huffman Tree
 
@@ -59,12 +59,9 @@ def sort_dict(d, reverse=False):
     return dict(sorted(d.items(), key=lambda x: x[1], reverse=reverse)) # ordena el diccionari en funció dels valors de frequencies
   
 def get_frequencies(arr):
-    arr = list(arr)
-    frequency_dict = {}
-    while len(arr) != 0:
-        v = arr[0]
-        frequency_dict.update({v: arr.count(v)})
-        arr = list(filter(v.__ne__, arr))
+    arr = np.asarray(arr)
+    unique, counts = np.unique(arr, return_counts=True)
+    frequency_dict = dict(zip(unique, counts))
     return frequency_dict
 
 class node:
@@ -82,7 +79,7 @@ class node:
         for i in range(2):
             if type(self.next_node[i]) is node:
                 dct.update(self.next_node[i].visualize(prev + f'{i}'))
-            else :
+            else:
                 dct[prev + f'{i}'] = self.next_node[i]
         return dct
 
@@ -181,4 +178,4 @@ def test():
     print(time()-t)
     print(test + test2 == decoded)
 
-test()
+# test()

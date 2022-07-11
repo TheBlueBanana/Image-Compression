@@ -31,7 +31,6 @@ def DC_decode(data):
             result.extend(i.result())
     return result
     
-
 def decode_chunk(data):
     chunk_length = int.from_bytes(data.read(8*4).tobytes(), byteorder='big') 
     last_num = data.read(8)

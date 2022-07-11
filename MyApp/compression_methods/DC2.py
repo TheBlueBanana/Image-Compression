@@ -1,4 +1,5 @@
 from random import randint
+from re import A
 from bitstring import BitArray, BitStream
 from concurrent.futures import thread, ThreadPoolExecutor
 from math import log2
@@ -46,6 +47,7 @@ def decode_chunk(data):
         # result.append(last_num.uint) #BitStream(f'0b{last_num}')
     return result
 
+
 def DC2_encode_arr(data, progress_bar=None):
     print('encoding DC2')
     data = list(data)
@@ -54,7 +56,7 @@ def DC2_encode_arr(data, progress_bar=None):
     for i in data:
         diff = i - last_num
         # result.extend([-128, i] if  abs(diff) > 127 else [diff])
-        result.append(diff) 
+        result.append(diff)
         last_num = i
     # result = int.to_bytes(len(result.tobytes()), length=4, byteorder='big') +  result # chunk_size
     return [len(result)] + result
@@ -66,9 +68,10 @@ def DC2_decode_arr(data):
     pointer = 0
     with ThreadPoolExecutor() as executor:
         threads = []
-        while len(data)-1>pointer:
-            section_lenght = data[0]
-            threads.append(executor.submit(decode_chunk_arr, data=data[pointer+1:pointer+1+section_lenght]))
+        while len(data)-1 >pointer:
+            section_lenght = data[pointer]
+            pointer +=1
+            threads.append(executor.submit(decode_chunk_arr, data=data[pointer:pointer+section_lenght]))
             pointer += section_lenght
         
         for i in threads:
@@ -94,7 +97,7 @@ def Test():
     a = []
     for i in range(100000):
         a.append(randint(0, 255))
-    print(a)
+    # print(a)
     e = DC2_encode_arr(a)
     d = DC2_decode_arr(e)
     print(len(e))

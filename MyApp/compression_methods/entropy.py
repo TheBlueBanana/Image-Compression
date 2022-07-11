@@ -17,10 +17,11 @@ from compression_methods.huffman import  get_frequencies, huffman_encode
 #We want entropies to be low, as they represent the minimun size for a file
 def get_all_entropies(data):
     dc = DC2_encode_arr(data)[1:]
-    return get_entropy(data), get_entropy(RLE_encode_arr(data)), get_entropy(dc), get_entropy(RLE_encode_arr(dc))
+    return get_entropy(data), get_entropy(RLE_encode_arr(data), 'RLE'), get_entropy(dc, 'DC'), get_entropy(RLE_encode_arr(dc), 'DC + RLE')
 
-def get_entropy(encoded_data):
+def get_entropy(encoded_data, method="raw"):
     frequency_dict = get_frequencies(encoded_data)
+    # print(f'#símbols {method}: {len(frequency_dict)}')
     entropy = 0
     for v in frequency_dict.values():
         p = v/len(encoded_data)

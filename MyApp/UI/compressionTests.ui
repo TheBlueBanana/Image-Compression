@@ -230,7 +230,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>CD + Huffman</string>
+    <string>DC + Huffman</string>
    </property>
   </widget>
   <widget class="QPushButton" name="DC_RLE_H_btn">
@@ -243,7 +243,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>CD + RLE + Huffman</string>
+    <string>DC + RLE + Huffman</string>
    </property>
   </widget>
   <widget class="QPushButton" name="entropy_btn">

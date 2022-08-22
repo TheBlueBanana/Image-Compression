@@ -131,17 +131,41 @@ def RLE_decode_arr(data):
             result.append(i)
             c+= 1
     return result
-    
+
+def RLE_encode_arrV2(data):
+    print('V2', min(data), max(data))
+    data = RLE_encode_arr(data)
+    cont = 0
+    for i in range(len(data)):
+        if cont == 0:
+            cont = -data[i] if data[i] < 0 else 1
+            data[i] += 127
+        else:
+            cont-=1
+    return data
+
+def RLE_decode_arrV2(data):
+    print('V2')
+    cont = 0
+    for i in range(len(data)):
+        if cont == 0:
+            data[i] -= 127
+            cont = -data[i] if data[i] < 0 else 1
+        else:
+            cont-=1
+    return RLE_decode_arr(data)
+
+
 def test_arr():
-    RLE_decode_arr(RLE_encode_arr([np.arange(100)]))
+    # RLE_decode_arr(RLE_encode_arr([np.arange(100)]))
 
     test=[]
-    for i in range(1000000):
-        test.append(randint(0, 10))
-    test = np.array(test)
-    te = RLE_encode_arr(test)
-    print(te)
-    td = RLE_decode_arr(te)
-    print(td)
+    for i in range(10000):
+        test.append(randint(0, 255))
+    # test = np.array(test)
+    te = RLE_encode_arrV2(test)
+    print(min(te), max(te))
+    td = RLE_decode_arrV2(te)
+    # print(td)
     print(td == test)
-# test_arr()
+test_arr()

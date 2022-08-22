@@ -1,7 +1,7 @@
 from random import randint
 from numpy import dtype, uint, asarray, uint8
 from compression_methods.DC2 import DC2_decode_arr, DC2_encode, DC2_encode_arr
-from compression_methods.RLE import RLE_decode_arr, RLE_encode_arr
+from compression_methods.RLE import RLE_decode_arr, RLE_encode_arr, RLE_decode_arrV2, RLE_encode_arrV2
 from compression_methods.huffman import get_frequencies, huffman_decode, huffman_encode
 
 # Usable
@@ -10,21 +10,21 @@ from compression_methods.huffman import get_frequencies, huffman_decode, huffman
 # from huffman import get_frequencies, huffman_decode, huffman_encode
 
 def RLE_H_encode(data, progress_bar=None):
-    return huffman_encode(RLE_encode_arr(data))
+    return huffman_encode(RLE_encode_arrV2(data))
 def DC_H_encode(data, progress_bar=None):
     return huffman_encode(DC2_encode_arr(data))
 def DC_RLE_H_encode(data, progress_bar=None):
     a = DC2_encode_arr(data)
-    b = RLE_encode_arr(a)
+    b = RLE_encode_arrV2(a)
     return huffman_encode(b)
 
 
 def RLE_H_decode(data, progress_bar=None):
-    return RLE_decode_arr(huffman_decode(data))
+    return RLE_decode_arrV2(huffman_decode(data))
 def DC_H_decode(data, progress_bar=None):
     return DC2_decode_arr(huffman_decode(data))
 def DC_RLE_H_decode(data, progress_bar=None):
-    return DC2_decode_arr(RLE_decode_arr(huffman_decode(data)))
+    return DC2_decode_arr(RLE_decode_arrV2(huffman_decode(data)))
 
 def Test():
     test = []
@@ -45,10 +45,10 @@ def variety_test(data=[]):
     else:
         for i in range(100000):
             test.append(randint(0, 255))
-    test = asarray(test, dtype=uint8)
-    e1 = RLE_encode_arr(test)
+    # test = asarray(test, dtype=uint8)
+    e1 = RLE_encode_arrV2(test)
     e2 = DC2_encode_arr(test)
-    e3 = RLE_encode_arr(e2)
+    e3 = RLE_encode_arrV2(e2)
     print('Varietat de símbols a la imatge: ')
     print(f'raw: ', len(get_frequencies(test)))
     print(f'RLE: ', len(get_frequencies(e1)))

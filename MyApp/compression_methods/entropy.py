@@ -7,7 +7,7 @@ from random import randint
 from bitstring import BitArray, BitStream
 from numpy import byte
 from compression_methods.DC2 import DC2_encode_arr
-from compression_methods.RLE import RLE_encode_arr
+from compression_methods.RLE import RLE_encode_arrV2, RLE_encode_arr
 from compression_methods.huffman import  get_frequencies, huffman_encode
 
 # from DC2 import DC2_encode_arr
@@ -17,7 +17,11 @@ from compression_methods.huffman import  get_frequencies, huffman_encode
 #We want entropies to be low, as they represent the minimun size for a file
 def get_all_entropies(data):
     dc = DC2_encode_arr(data)[1:]
-    return get_entropy(data), get_entropy(RLE_encode_arr(data), 'RLE'), get_entropy(dc, 'DC'), get_entropy(RLE_encode_arr(dc), 'DC + RLE')
+    rle=RLE_encode_arrV2(dc)
+    print('Longitudes')
+    print(f'{ len(data) - len(RLE_encode_arrV2(data))}')
+    # print(get_frequencies(RLE_encode_arrV2(data)))
+    return get_entropy(data), get_entropy(RLE_encode_arrV2(data), 'RLE'), get_entropy(dc, 'DC'), get_entropy(rle, 'DC + RLE')
 
 def get_entropy(encoded_data, method="raw"):
     frequency_dict = get_frequencies(encoded_data)
@@ -40,5 +44,5 @@ def test():
     # for i in range(100000):
     #     test.append(randint(0, 255))
     print(get_all_entropies(test))
-    print((len(huffman_encode(test))*8, 8*len(huffman_encode(RLE_encode_arr(test))), 8*len(huffman_encode(DC2_encode_arr(test)))))
+    print((len(huffman_encode(test))*8, 8*len(huffman_encode(RLE_encode_arrV2(test))), 8*len(huffman_encode(DC2_encode_arr(test)))))
 # test()
